@@ -6,7 +6,7 @@
 /*   By: fyuzhyk <fyuzhyk@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/05/01 14:37:39 by fyuzhyk           #+#    #+#             */
-/*   Updated: 2022/05/01 18:30:29 by fyuzhyk          ###   ########.fr       */
+/*   Updated: 2022/05/01 18:40:34 by fyuzhyk          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -26,7 +26,7 @@ int main(int argc, char **argv, char **envp)
 	char	*test;
 	char	*cmd;
 	char	*paths;
-	char	**arg_list = {argv[1], argv[2], NULL};
+	char	*arg_list[] = {argv[1], argv[2], NULL};
 
 	i = 0;
 	cmd = malloc(sizeof(char) * ft_strlen(argv[1]) + 1);
@@ -51,14 +51,16 @@ int main(int argc, char **argv, char **envp)
 		test = strcat(test, "/");
 		test = strcat(test, cmd);
 		// printf("test: %s\n", test);
-		if (fd == open(test, O_RDONLY) != 0)
+		if ((fd = open(test, O_RDONLY)) != -1)
+		{
+			printf("the right path is: %s\n", test);
 			break;
+		}
 		else
 			free(test);
 		i++;
 	}
-	printf("the right path is: %s", test);
-
+	//printf("the right path is: %s", test);
 	execve(test, arg_list, NULL);
 	return (0);
 }

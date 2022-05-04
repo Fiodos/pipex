@@ -6,7 +6,7 @@
 /*   By: fyuzhyk <fyuzhyk@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/05/01 14:37:39 by fyuzhyk           #+#    #+#             */
-/*   Updated: 2022/05/01 18:40:34 by fyuzhyk          ###   ########.fr       */
+/*   Updated: 2022/05/04 10:46:15 by fyuzhyk          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -77,60 +77,50 @@ char	*get_path(char *argv[], char *envp[], int index)
 
 char	**init_arg_lst(char **argv, int index)
 {
-	char	*args;
 	char	**lst;
 
-	args = malloc(sizeof(char) * ft_strlen(argv[index]) + ft_strlen(argv[index + 1]) + 2);
-	args = strcpy(args, argv[index]);
-	args = strncat(args, " ", sizeof(char));
-	args = strncat(args, argv[index + 1], ft_strlen(argv[index + 1]));
-	lst = ft_split(args, ' ');
+	lst = ft_split(argv[index], ' ');
 	return (lst);
 }
 
-int main(int argc, char **argv, char *envp[])
-{
-	int			index;
-	int			id;
-	int			pipe_fd[2];
-	int			pipe_index[2];
-	char		**arg_list;
-	char		*test = malloc(sizeof(char) * 100);
-	char		*path;
 
-	index = 1;
-	pipe(pipe_fd);
-	pipe(pipe_index);
-	id = fork();
-	if (id == 0) // child process;
+void	exec_cmd(char *argv[], int argc, char *envp[], int index)
+{
+	int	file_fd;
+
+	if ((index + 1) == (argc - 1))
 	{
-		id = fork();
-		if (id == 0) // child's child process; // aka the "first" process;
-		{
-			// dup2(pipe_index[1], 1);
-			// index = 3;
-			// write(1, &index, sizeof(index));
-			dup2(pipe_fd[1], 1);
-			execve(get_path(argv, envp, index), init_arg_lst(argv, index), NULL);
-		}
-		wait(NULL);
-		index = index + 2;
-		int test_fd = open("test", O_RDWR | O_CREAT, 0777);
-		if (read(pipe_fd[0], test, 100) == -1)
-		{
-			printf("read call failed");
-			return (1);
-		}
-		// read(pipe_index[0], &index, sizeof(char));
-		ft_putstr_fd(test, test_fd);
-		// char	*arg_list_2[] = {"wc", "-c", "test", NULL};
-		arg_list = init_arg_lst(argv, index);
-		path = get_path(argv, envp, index);
-		id = open(argv[4], O_WRONLY);
-		dup2(id, 1);
-		execve(path, arg_list, NULL);
+		file_fd = open(argv[index + 1], O_WRONLY, 0777);
+		dup2(file_fd, STDOUT_FILENO);
+		execve(get_path(argv, envp, index), init_arg_lst(argv, index), NULL);
+	}
+	if (index == 2)
+	{
+		file_fd = open(argv[1], O_RDONLY, 0777);
+		dup2(file_fd, STDIN_FILENO);
+		execve(get_path(argv, envp, index), init_arg_lst(argv, index), NULL);
+	}
+	execve(get_path(argv, envp, index), init_arg_lst(argv, index), NULL);
+}
+
+int main(int argc, char **argv, char **envp)
+{
+	int	id;
+	int pipe_fd[2];
+	int	index;
+
+	index = 2;
+	pipe(pipe_fd);
+	id = fork();
+	if (id == 0)
+	{
+		close(pipe_fd[0]);
+		dup2(pipe_fd[1], STDOUT_FILENO);
+		exec_cmd(argv, argc, envp, index);
 	}
 	wait(NULL);
-	unlink("test");
-	return (0);
+	close(pipe_fd[1]);
+	index++;
+	dup2(pipe_fd[0], STDIN_FILENO);
+	exec_cmd(argv, argc, envp, index);
 }

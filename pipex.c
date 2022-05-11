@@ -6,7 +6,7 @@
 /*   By: fyuzhyk <fyuzhyk@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/05/01 14:37:39 by fyuzhyk           #+#    #+#             */
-/*   Updated: 2022/05/10 17:53:59 by fyuzhyk          ###   ########.fr       */
+/*   Updated: 2022/05/11 13:36:02 by fyuzhyk          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -16,7 +16,11 @@
 #include <fcntl.h>
 #include <string.h>
 #include <stdlib.h>
+#include <errno.h> // are we allowed to use it?
 #include "libft/libft.h"
+
+
+#define CMD_NOT_FOUND perror("command not found")
 
 typedef struct t_pipes
 {
@@ -67,6 +71,8 @@ int	*get_pipe(t_pipe *pipe)
 {
 	int	*result;
 
+	if (pipe == NULL)
+		return (0);
 	result = pipe->pipes;
 	return (result);
 }
@@ -85,8 +91,10 @@ void	create_pipes(t_pipe **header, int argc)
 
 void	open_pipes(t_pipe *p)
 {
+	if (p == NULL)
+		perror("open_pipes: null pointer argument");
 	if (pipe(p->pipes) == -1)
-		return ; // do I need to specifiy the error?
+		strerror(errno);
 }
 
 void	pipe_iter(t_pipe *pipe, void (*open_pipes)(t_pipe *))
@@ -106,22 +114,22 @@ void	call_dup(char *c, int fd, int *current_pipe, int *next_pipe)
 	if (!ft_strncmp(c, "co", 2))
 	{
 		if (dup2(current_pipe[fd], STDOUT_FILENO) == -1)
-			return ;
+			strerror(errno);
 	}
 	else if (!ft_strncmp(c, "no", 2))
 	{
 		if (dup2(next_pipe[fd], STDOUT_FILENO) == -1)
-			return ;
+			strerror(errno);
 	}
 	else if (!ft_strncmp(c, "ci", 2))
 	{
 		if (dup2(current_pipe[fd], STDIN_FILENO) == -1)
-			return ;
+			strerror(errno);
 	}
 	else
 	{
 		if (dup2(next_pipe[fd], STDIN_FILENO) == -1)
-			return ;
+			strerror(errno);
 	}
 }
 
@@ -173,14 +181,14 @@ void	close_pipes(int *current_pipe, int *next_pipe, int index)
 	{
 		if (index != 2)
 		{
-			close(next_pipe[0]);
-			close(next_pipe[1]);
+			if ((close(next_pipe[0])) == -1 && (close(next_pipe[1]) == -1))
+				strerror(errno);
 		}
 	}
 	else
 	{
-		close(current_pipe[0]);
-		close(current_pipe[1]);
+			if ((close(current_pipe[0])) == -1 && (close(current_pipe[1]) == -1))
+				strerror(errno);
 	}
 }
 
@@ -195,6 +203,8 @@ char	*get_envp_path(char *envp[])
 		if (!ft_strncmp(envp[i], "PATH", ft_strlen("PATH")))
 		{
 			envp_path = malloc(sizeof(char) * ft_strlen(envp[i]) + 1);
+			if (envp_path == NULL)
+				perror("get_envp_path: malloc failed"); // like this, or is return (NULL) in such a case enough?
 			strcpy(envp_path, envp[i]);
 			return (envp_path);
 		}
@@ -208,6 +218,8 @@ char	*init_path(char *element, char *cmd)
 	char	*path;
 
 	path = malloc(sizeof(char) * ft_strlen(cmd) + ft_strlen(element) + 2);
+	if (path == NULL)
+		perror("init_path: malloc failed");
 	path = strcpy(path, element);
 	path = strcat(path, "/");
 	path = strcat(path, cmd);
@@ -217,7 +229,6 @@ char	*init_path(char *element, char *cmd)
 char	*get_path(char *argv[], char *envp[], int index)
 {
 	int		i;
-	int		fd;
 	char	*path;
 	char	**cmd;
 	char	**full_path;
@@ -227,13 +238,9 @@ char	*get_path(char *argv[], char *envp[], int index)
 	cmd = ft_split(argv[index], ' ');
 	while (full_path[i])
 	{
-		fd = 0;
 		path = init_path(full_path[i], cmd[0]);
-		if ((fd = open(path, O_RDONLY)) != -1)
-		{
-			close(fd);
+		if (access(path, F_OK) != -1)
 			return (path);
-		}
 		else
 			free(path);
 		i++;
@@ -249,31 +256,35 @@ char	**init_arg_lst(char **argv, int index)
 	return (lst);
 }
 
-void	exec_cmd(char *argv[], int argc, char *envp[], int index)
+int	exec_cmd(char *argv[], int argc, char *envp[], int index)
 {
 	int		file_fd;
 	char	*path;
 
 	path = get_path(argv, envp, index);
-	if (access(path, X_OK) == -1)
-		return ;
+	if (path == NULL)
+	{
+		// perror("invalid command");
+		return (1);
+	}
 	if ((index + 1) == (argc - 1))
 	{
 		if ((file_fd = open(argv[index + 1], O_WRONLY, 0777)) == -1)
-			return ;
+			strerror(errno);
 		if (dup2(file_fd, STDOUT_FILENO) == -1)
-			return ;
+			strerror(errno);
 		execve(path, init_arg_lst(argv, index), NULL);
 	}
 	if (index == 2)
 	{
 		if ((file_fd = open(argv[1], O_RDONLY, 0777)) == -1)
-			return ;
+			strerror(errno);
 		if (dup2(file_fd, STDIN_FILENO) == -1)
-			return ;
+			strerror(errno);
 		execve(path, init_arg_lst(argv, index), NULL);
 	}
 	execve(path, init_arg_lst(argv, index), NULL);
+	return (0);
 }
 
 int main(int argc, char **argv, char **envp)
@@ -290,7 +301,7 @@ int main(int argc, char **argv, char **envp)
 	current_pipe = get_pipe(p);
 	index = 2;
 	if (argc < 5)
-		return (1);
+		perror("main: too few arguments");
 	while (index < (argc - 1))
 	{
 		id = fork();
@@ -304,9 +315,6 @@ int main(int argc, char **argv, char **envp)
 		index++;
 	}
 }
-
-// need to check whether there are 4 arguments (return if not);
-// check all functions!;
-// check everytime if the calls are executed correctly; e.g, if the pipe/open calls
-// etc are returning an error or not;
-// after the last execution, are there any pipes open? (even if, is this a problem?);
+// need to handle input of non-existing commands;
+// check out whether you need to write a clear function, e.g if split or create_pipes fails?
+// in general take a look at how to check for mem leaks;

@@ -6,7 +6,7 @@
 /*   By: fyuzhyk <fyuzhyk@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/05/01 14:37:39 by fyuzhyk           #+#    #+#             */
-/*   Updated: 2022/05/11 13:36:02 by fyuzhyk          ###   ########.fr       */
+/*   Updated: 2022/05/11 14:22:06 by fyuzhyk          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -94,7 +94,7 @@ void	open_pipes(t_pipe *p)
 	if (p == NULL)
 		perror("open_pipes: null pointer argument");
 	if (pipe(p->pipes) == -1)
-		strerror(errno);
+		perror("pipe couldn't be opened");
 }
 
 void	pipe_iter(t_pipe *pipe, void (*open_pipes)(t_pipe *))
@@ -114,22 +114,22 @@ void	call_dup(char *c, int fd, int *current_pipe, int *next_pipe)
 	if (!ft_strncmp(c, "co", 2))
 	{
 		if (dup2(current_pipe[fd], STDOUT_FILENO) == -1)
-			strerror(errno);
+			perror("call_dup: dup2 call failed");
 	}
 	else if (!ft_strncmp(c, "no", 2))
 	{
 		if (dup2(next_pipe[fd], STDOUT_FILENO) == -1)
-			strerror(errno);
+			perror("call_dup: dup2 call failed");
 	}
 	else if (!ft_strncmp(c, "ci", 2))
 	{
 		if (dup2(current_pipe[fd], STDIN_FILENO) == -1)
-			strerror(errno);
+			perror("call_dup: dup2 call failed");
 	}
 	else
 	{
 		if (dup2(next_pipe[fd], STDIN_FILENO) == -1)
-			strerror(errno);
+			perror("call_dup: dup2 call failed");
 	}
 }
 
@@ -256,35 +256,31 @@ char	**init_arg_lst(char **argv, int index)
 	return (lst);
 }
 
-int	exec_cmd(char *argv[], int argc, char *envp[], int index)
+void	exec_cmd(char *argv[], int argc, char *envp[], int index)
 {
 	int		file_fd;
 	char	*path;
 
 	path = get_path(argv, envp, index);
 	if (path == NULL)
-	{
-		// perror("invalid command");
-		return (1);
-	}
+		perror("invalid command");
 	if ((index + 1) == (argc - 1))
 	{
 		if ((file_fd = open(argv[index + 1], O_WRONLY, 0777)) == -1)
-			strerror(errno);
+			perror("file cannot be opened"); // check it out later on;
 		if (dup2(file_fd, STDOUT_FILENO) == -1)
-			strerror(errno);
+			perror("dup2 call failed");
 		execve(path, init_arg_lst(argv, index), NULL);
 	}
 	if (index == 2)
 	{
 		if ((file_fd = open(argv[1], O_RDONLY, 0777)) == -1)
-			strerror(errno);
+			perror("file cannot be opened");
 		if (dup2(file_fd, STDIN_FILENO) == -1)
-			strerror(errno);
+			perror("dup2 call failed");
 		execve(path, init_arg_lst(argv, index), NULL);
 	}
 	execve(path, init_arg_lst(argv, index), NULL);
-	return (0);
 }
 
 int main(int argc, char **argv, char **envp)
@@ -318,3 +314,4 @@ int main(int argc, char **argv, char **envp)
 // need to handle input of non-existing commands;
 // check out whether you need to write a clear function, e.g if split or create_pipes fails?
 // in general take a look at how to check for mem leaks;
+// actually my code behaves in the same way if some cmd's aren't valid. give it a closer look;

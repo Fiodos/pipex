@@ -6,7 +6,7 @@
 #    By: fyuzhyk <fyuzhyk@student.42.fr>            +#+  +:+       +#+         #
 #                                                 +#+#+#+#+#+   +#+            #
 #    Created: 2022/05/12 14:04:46 by fyuzhyk           #+#    #+#              #
-#    Updated: 2022/05/12 15:05:08 by fyuzhyk          ###   ########.fr        #
+#    Updated: 2022/05/14 15:49:47 by fyuzhyk          ###   ########.fr        #
 #                                                                              #
 # **************************************************************************** #
 
@@ -30,14 +30,14 @@ $(NAME) : $(PIPEX) $(LIB)
 
 $(LIB) : $(OBJ) $(OBJ_LIBFT)
 	Make -C libft
-	cp libft/libft.a $(NAME)
+	cp libft/libft.a $(LIB)
 	ar rc $(LIB) $(OBJ) $(OBJ_LIBFT)
 
 %.o : %.c
 	$(CC) -c $(CFLAGS) $< -o $@
 
 fclean: clean
-	rm -f $(LIB) libft/libft.a
+	rm -f $(LIB) $(NAME) libft/libft.a
 
 clean:
 	rm -f $(OBJ) $(OBJ_LIBFT)

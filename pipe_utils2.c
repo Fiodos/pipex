@@ -6,7 +6,7 @@
 /*   By: fyuzhyk <fyuzhyk@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/05/12 11:43:23 by fyuzhyk           #+#    #+#             */
-/*   Updated: 2022/05/12 12:12:06 by fyuzhyk          ###   ########.fr       */
+/*   Updated: 2022/05/14 15:19:43 by fyuzhyk          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -51,14 +51,14 @@ t_pipe	*lstnew(void)
 	return (new_node);
 }
 
-void	pipe_iter(t_pipe *pipe, void (*open_pipes)(t_pipe *))
+void	pipe_iter(t_pipe **pipe, void (*open_pipes)(t_pipe **))
 {
 	t_pipe	*curr;
 
-	curr = pipe;
+	curr = *pipe;
 	while (curr != NULL)
 	{
-		open_pipes(curr);
+		open_pipes(&curr);
 		curr = curr->next;
 	}
 }

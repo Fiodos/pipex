@@ -6,7 +6,7 @@
 /*   By: fyuzhyk <fyuzhyk@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/05/12 11:45:02 by fyuzhyk           #+#    #+#             */
-/*   Updated: 2022/05/12 15:12:26 by fyuzhyk          ###   ########.fr       */
+/*   Updated: 2022/05/14 15:46:14 by fyuzhyk          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -85,16 +85,20 @@ char	*get_path(char *argv[], char *envp[], int index)
 	int		i;
 	char	*path;
 	char	**cmd;
+	char	*envp_path;
 	char	**full_path;
 
 	i = 0;
-	full_path = ft_split((get_envp_path(envp) + 5), ':');
+	envp_path = get_envp_path(envp);
+	full_path = ft_split(envp_path + 5, ':');
 	cmd = ft_split(argv[index], ' ');
 	while (full_path[i])
 	{
 		path = init_path(full_path[i], cmd[0]);
 		if (access(path, F_OK) != -1)
+		{
 			return (path);
+		}
 		else
 			free(path);
 		i++;

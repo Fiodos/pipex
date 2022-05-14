@@ -6,7 +6,7 @@
 /*   By: fyuzhyk <fyuzhyk@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/05/12 11:47:44 by fyuzhyk           #+#    #+#             */
-/*   Updated: 2022/05/12 14:57:34 by fyuzhyk          ###   ########.fr       */
+/*   Updated: 2022/05/14 15:45:26 by fyuzhyk          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -65,7 +65,7 @@ char	**init_arg_lst(char **argv, int index)
 	return (lst);
 }
 
-void	exec_cmd(char *argv[], int argc, char *envp[], int index)
+void	exec_cmd(char **argv, int argc, char **envp, int index)
 {
 	int		file_fd;
 	char	*path;
@@ -100,6 +100,6 @@ int	*init_setup(char **argv, int argc, t_pipe *p)
 		error_handler(6, NULL);
 	open(argv[argc - 1], O_RDWR | O_CREAT, 0777);
 	create_pipes(&p, argc);
-	pipe_iter(p, *open_pipes);
+	pipe_iter(&p, *open_pipes);
 	return (get_pipe(p));
 }

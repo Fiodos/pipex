@@ -6,7 +6,7 @@
 /*   By: fyuzhyk <fyuzhyk@student.42.fr>            +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/05/12 11:38:47 by fyuzhyk           #+#    #+#             */
-/*   Updated: 2022/05/12 14:59:26 by fyuzhyk          ###   ########.fr       */
+/*   Updated: 2022/05/14 15:46:42 by fyuzhyk          ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -14,19 +14,21 @@
 
 void	create_pipes(t_pipe **header, int argc)
 {
-	int	i;
+	t_pipe	*new;
+	int		i;
 
 	i = 0;
-	while (i < (argc - 3))
+	while (i < (argc - 4))
 	{
-		lstadd_back(header, lstnew());
+		new = lstnew();
+		lstadd_back(header, new);
 		i++;
 	}
 }
 
-void	open_pipes(t_pipe *p)
+void	open_pipes(t_pipe **p)
 {
-	if (pipe(p->pipes) == -1)
+	if (pipe((*p)->pipes) == -1)
 		error_handler(7, NULL);
 }
 
